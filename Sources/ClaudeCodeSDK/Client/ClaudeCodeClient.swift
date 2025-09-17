@@ -357,6 +357,7 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
           process: process,
           outputPipe: outputPipe,
           errorPipe: errorPipe,
+          command: command,
           abortController: abortController,
           timeout: timeout
         )
@@ -430,6 +431,7 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
     process: Process,
     outputPipe: Pipe,
     errorPipe: Pipe,
+    command: String,
     abortController: AbortController? = nil,
     timeout: TimeInterval? = nil
   ) async throws -> ClaudeCodeResult {
@@ -561,13 +563,40 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
     if !process.isRunning {
       // Process terminated immediately - this is an error
       let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-      let errorString = String(data: errorData, encoding: .utf8) ?? "Process terminated immediately after launch"
+      var errorString = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+      // If error string is empty, construct a meaningful message
+      if errorString.isEmpty {
+        let exitCode = process.terminationStatus
+        let terminationReason = process.terminationReason
+
+        errorString = "Process exited immediately with code \(exitCode)"
+
+        // Add context about what likely went wrong based on exit code
+        switch exitCode {
+        case 1, 2:
+          errorString += ". This typically indicates a shell syntax error in your configuration or system prompt. Check for unescaped special characters like quotes, parentheses, or backslashes."
+        case 126:
+          errorString += ". Command found but not executable. Check file permissions."
+        case 127:
+          errorString += ". Command not found in PATH."
+        case -1:
+          errorString += ". Process was terminated by signal."
+        default:
+          errorString += " (termination reason: \(terminationReason.rawValue))."
+        }
+
+        // Include the command for debugging (truncate if too long)
+        let truncatedCommand = command.count > 200 ? String(command.prefix(200)) + "..." : command
+        errorString += " Command attempted: \(truncatedCommand)"
+      }
 
       logger?.error("Process terminated immediately: \(errorString)")
 
       // Check specific error patterns
       if errorString.contains("No such file or directory") ||
-         errorString.contains("command not found") {
+         errorString.contains("command not found") ||
+         errorString.contains("Command not found in PATH") {
         throw ClaudeCodeError.notInstalled
       } else if errorString.contains("zsh:") || errorString.contains("syntax error") ||
                 errorString.contains("parse error") || errorString.contains("bad option") {
