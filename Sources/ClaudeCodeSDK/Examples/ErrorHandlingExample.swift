@@ -11,7 +11,7 @@ import Foundation
 
 func basicErrorHandling() async throws {
     let client = ClaudeCodeClient()
-    
+
     do {
         let result = try await client.runSinglePrompt(
             prompt: "Write a hello world function",
@@ -29,6 +29,9 @@ func basicErrorHandling() async throws {
             print("Rate limited. Retry after: \(retryAfter ?? 60) seconds")
         case .permissionDenied(let message):
             print("Permission denied: \(message)")
+        case .processLaunchFailed(let message):
+            print("Failed to launch Claude process: \(message)")
+            print("Check your command arguments and configuration")
         default:
             print("Error: \(error.localizedDescription)")
         }
@@ -129,11 +132,11 @@ func smartErrorHandling() async throws {
 
 func abortExample() async {
     let client = ClaudeCodeClient()
-    
+
     var options = ClaudeCodeOptions()
     let abortController = AbortController()
     options.abortController = abortController
-    
+
     // Start a long-running task
     Task {
         do {
@@ -147,11 +150,64 @@ func abortExample() async {
             print("Task was cancelled")
         }
     }
-    
+
     // Cancel after 5 seconds
     Task {
         try? await Task.sleep(nanoseconds: 5_000_000_000)
         print("Aborting task...")
         abortController.abort()
+    }
+}
+
+// MARK: - Process Launch Failure Example
+
+func processLaunchFailureExample() async {
+    let client = ClaudeCodeClient()
+
+    // Example 1: Handle malformed command arguments
+    var badOptions = ClaudeCodeOptions()
+    badOptions.printMode = true
+    // Simulate a bad configuration that might cause shell parsing errors
+    badOptions.systemPrompt = "System prompt with \"unescaped quotes\" and bad syntax"
+
+    do {
+        let result = try await client.runSinglePrompt(
+            prompt: "Test prompt",
+            outputFormat: .streamJson,
+            options: badOptions
+        )
+
+        // This code won't be reached if process fails to launch
+        if case .stream(_) = result {
+            print("Got stream publisher")
+        }
+    } catch ClaudeCodeError.processLaunchFailed(let message) {
+        // This error is now properly thrown instead of returning a dead stream
+        print("Process failed to launch: \(message)")
+
+        // Check for specific error patterns
+        if message.contains("syntax error") || message.contains("parse error") {
+            print("Command syntax error detected. Review your configuration.")
+        } else if message.contains("bad option") {
+            print("Invalid command option detected.")
+        }
+    } catch {
+        print("Other error: \(error)")
+    }
+
+    // Example 2: Handle with resumeConversation
+    do {
+        let result = try await client.resumeConversation(
+            sessionId: "some-session",
+            prompt: "Continue",
+            outputFormat: .streamJson,
+            options: badOptions
+        )
+        print("Resume succeeded: \(result)")
+    } catch ClaudeCodeError.processLaunchFailed(let message) {
+        // Now properly catches process launch failures
+        print("Failed to resume conversation - process launch failed: \(message)")
+    } catch {
+        print("Resume failed with error: \(error)")
     }
 }

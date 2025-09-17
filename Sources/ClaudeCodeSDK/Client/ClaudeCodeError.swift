@@ -17,6 +17,7 @@ public enum ClaudeCodeError: Error {
   case rateLimitExceeded(retryAfter: TimeInterval?)
   case networkError(Error)
   case permissionDenied(String)
+  case processLaunchFailed(String)
   
   public var localizedDescription: String {
     switch self {
@@ -41,6 +42,8 @@ public enum ClaudeCodeError: Error {
       return "Network error: \(error.localizedDescription)"
     case .permissionDenied(let message):
       return "Permission denied: \(message)"
+    case .processLaunchFailed(let message):
+      return "Process failed to launch: \(message)"
     }
   }
 }

@@ -546,15 +546,38 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       self.task = process
     } catch {
       logger?.error("Failed to start process: \(error.localizedDescription)")
-      
+
       if (error as NSError).domain == NSPOSIXErrorDomain && (error as NSError).code == 2 {
         // No such file or directory
         throw ClaudeCodeError.notInstalled
       }
-      throw error
+      throw ClaudeCodeError.processLaunchFailed(error.localizedDescription)
     }
-    
-    // Return the publisher
+
+    // Check if process failed immediately after launch
+    // Give it a brief moment to start up
+    try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+    if !process.isRunning {
+      // Process terminated immediately - this is an error
+      let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+      let errorString = String(data: errorData, encoding: .utf8) ?? "Process terminated immediately after launch"
+
+      logger?.error("Process terminated immediately: \(errorString)")
+
+      // Check specific error patterns
+      if errorString.contains("No such file or directory") ||
+         errorString.contains("command not found") {
+        throw ClaudeCodeError.notInstalled
+      } else if errorString.contains("zsh:") || errorString.contains("syntax error") ||
+                errorString.contains("parse error") || errorString.contains("bad option") {
+        throw ClaudeCodeError.processLaunchFailed("Invalid command arguments: \(errorString)")
+      } else {
+        throw ClaudeCodeError.processLaunchFailed(errorString)
+      }
+    }
+
+    // Return the publisher only if process is running
     return .stream(publisher)
   }
   

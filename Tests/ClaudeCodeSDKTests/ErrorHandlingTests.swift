@@ -21,7 +21,8 @@ final class ErrorHandlingTests: XCTestCase {
     let rateLimitError = ClaudeCodeError.rateLimitExceeded(retryAfter: 60.0)
     let networkError = ClaudeCodeError.networkError(NSError(domain: "network", code: -1009))
     let permissionError = ClaudeCodeError.permissionDenied("Access denied")
-    
+    let processLaunchError = ClaudeCodeError.processLaunchFailed("Invalid command arguments")
+
     // Test error descriptions
     XCTAssertEqual(notInstalledError.localizedDescription, "Claude Code is not installed. Please install with 'npm install -g @anthropic/claude-code'")
     XCTAssertTrue(invalidConfigError.localizedDescription.contains("Invalid API key"))
@@ -31,6 +32,7 @@ final class ErrorHandlingTests: XCTestCase {
     XCTAssertTrue(rateLimitError.localizedDescription.contains("Rate limit exceeded"))
     XCTAssertTrue(networkError.localizedDescription.contains("Network error"))
     XCTAssertTrue(permissionError.localizedDescription.contains("Access denied"))
+    XCTAssertTrue(processLaunchError.localizedDescription.contains("Process failed to launch"))
   }
   
   func testErrorProperties() {
@@ -88,7 +90,7 @@ final class ErrorHandlingTests: XCTestCase {
       .permissionDenied("Access denied"),
       .networkError(NSError(domain: "network", code: -1009))
     ]
-    
+
     for error in errors {
       // Test the README pattern
       if error.isRetryable {
@@ -103,5 +105,25 @@ final class ErrorHandlingTests: XCTestCase {
         XCTAssertFalse(error.isRetryable) // Permission errors not retryable
       }
     }
+  }
+
+  func testProcessLaunchFailure() {
+    // Test process launch failure error
+    let launchError = ClaudeCodeError.processLaunchFailed("zsh: bad option: -invalid")
+
+    // Test error description
+    XCTAssertTrue(launchError.localizedDescription.contains("Process failed to launch"))
+    XCTAssertTrue(launchError.localizedDescription.contains("bad option"))
+
+    // Process launch failures should not be retryable by default
+    // (since they're usually due to malformed commands)
+    XCTAssertFalse(launchError.isRetryable)
+
+    // Test specific error patterns
+    let syntaxError = ClaudeCodeError.processLaunchFailed("syntax error near unexpected token")
+    XCTAssertTrue(syntaxError.localizedDescription.contains("syntax error"))
+
+    let parseError = ClaudeCodeError.processLaunchFailed("parse error in command")
+    XCTAssertTrue(parseError.localizedDescription.contains("parse error"))
   }
 }
