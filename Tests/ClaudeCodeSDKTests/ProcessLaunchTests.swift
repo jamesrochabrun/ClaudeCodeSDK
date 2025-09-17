@@ -83,6 +83,33 @@ final class ProcessLaunchTests: XCTestCase {
     }
   }
 
+  func testEmptyStderrErrorMessage() async throws {
+    // Test that when stderr is empty, we get meaningful error messages
+    var config = ClaudeCodeConfiguration.default
+    // Use false command which exits with code 1 but produces no stderr
+    config.command = "/usr/bin/false"
+    let client = ClaudeCodeClient(configuration: config)
+
+    do {
+      _ = try await client.runSinglePrompt(
+        prompt: "test",
+        outputFormat: .streamJson,
+        options: nil
+      )
+      XCTFail("Should have thrown an error")
+    } catch ClaudeCodeError.processLaunchFailed(let message) {
+      // Verify we get a meaningful error message even when stderr is empty
+      XCTAssertFalse(message.isEmpty, "Error message should not be empty")
+      XCTAssertTrue(message.contains("Process exited immediately with code"), "Should include exit code")
+      XCTAssertTrue(message.contains("Command attempted:"), "Should include command info")
+      // For exit code 1, should include hint about shell syntax
+      XCTAssertTrue(message.contains("shell syntax error") || message.contains("code 1"), "Should provide context for exit code")
+      print("Got meaningful error message: \(message)")
+    } catch {
+      XCTFail("Unexpected error type: \(error)")
+    }
+  }
+
   func testNormalOperationNotAffected() async throws {
     // Test that normal operations still work with valid commands
     var config = ClaudeCodeConfiguration.default
