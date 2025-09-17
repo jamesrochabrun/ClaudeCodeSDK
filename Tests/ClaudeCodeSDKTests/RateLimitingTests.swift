@@ -145,4 +145,9 @@ private class MockClaudeCode: ClaudeCode {
   func cancel() {
     // No-op
   }
+
+  func validateCommand(_ command: String) async throws -> Bool {
+    // Mock implementation - always returns true
+    return true
+  }
 }
