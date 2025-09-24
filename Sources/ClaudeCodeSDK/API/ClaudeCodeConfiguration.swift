@@ -26,6 +26,9 @@ public struct ClaudeCodeConfiguration {
   
   /// Optional suffix to append after the command (e.g., "--" for "airchat --")
   public var commandSuffix: String?
+
+  /// List of tools that should be disallowed for Claude to use
+  public var disallowedTools: [String]?
   
   /// Default configuration
   public static var `default`: ClaudeCodeConfiguration {
@@ -42,7 +45,8 @@ public struct ClaudeCodeConfiguration {
         "/usr/sbin",          // System administration binaries
         "/sbin"               // Essential system binaries
       ],
-      commandSuffix: nil
+      commandSuffix: nil,
+      disallowedTools: nil
     )
   }
   
@@ -59,7 +63,8 @@ public struct ClaudeCodeConfiguration {
       "/usr/sbin",          // System administration binaries
       "/sbin"               // Essential system binaries
     ],
-    commandSuffix: String? = nil
+    commandSuffix: String? = nil,
+    disallowedTools: [String]? = nil
   ) {
     self.command = command
     self.workingDirectory = workingDirectory
@@ -67,5 +72,6 @@ public struct ClaudeCodeConfiguration {
     self.enableDebugLogging = enableDebugLogging
     self.additionalPaths = additionalPaths
     self.commandSuffix = commandSuffix
+    self.disallowedTools = disallowedTools
   }
 }
