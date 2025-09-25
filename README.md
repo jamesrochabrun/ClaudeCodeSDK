@@ -1,6 +1,6 @@
 # ClaudeCodeSDK
 
-[Beta] A Swift SDK for seamlessly integrating Claude Code into your iOS and macOS applications. Interact with Anthropic's Claude Code programmatically for AI-powered coding assistance.
+[Beta] A Swift SDK for seamlessly integrating Claude Code into your macOS applications. Interact with Anthropic's Claude Code programmatically for AI-powered coding assistance.
 
 ## ✨ What's New
 
@@ -18,9 +18,11 @@ ClaudeCodeSDK allows you to integrate Claude Code's capabilities directly into y
 
 ## Requirements
 
-* **Platforms:** iOS 15+ or macOS 13+
+* **Platforms:** macOS 13+
 * **Swift Version:** Swift 6.0+
 * **Dependencies:** Claude Code CLI installed (`npm install -g @anthropic/claude-code`)
+
+> **Note:** iOS is not supported because the SDK relies on spawning the Claude CLI as a subprocess using the `Process` API, which is only available on macOS. iOS apps run in a sandboxed environment that prevents executing external processes.
 
 ## 🚀 Installation
 
