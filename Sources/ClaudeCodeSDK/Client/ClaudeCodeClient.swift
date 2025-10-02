@@ -12,9 +12,17 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
   private var cancellables = Set<AnyCancellable>()
   private var logger: Logger?
   private let decoder = JSONDecoder()
-  
+
   /// Configuration for the client - can be updated at any time
   public var configuration: ClaudeCodeConfiguration
+
+  /// Storage for last executed command info
+  private var _lastExecutedCommandInfo: ExecutedCommandInfo?
+
+  /// Debug information about the last command executed
+  public var lastExecutedCommandInfo: ExecutedCommandInfo? {
+    _lastExecutedCommandInfo
+  }
   
   public init(configuration: ClaudeCodeConfiguration = .default) {
     self.configuration = configuration
@@ -92,10 +100,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: stdinContent,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .runWithStdin
     )
   }
-  
+
   public func runSinglePrompt(
     prompt: String,
     outputFormat: ClaudeCodeOutputFormat,
@@ -124,10 +133,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .runSinglePrompt
     )
   }
-  
+
   public func continueConversation(
     prompt: String?,
     outputFormat: ClaudeCodeOutputFormat,
@@ -157,10 +167,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .continueConversation
     )
   }
-  
+
   public func resumeConversation(
     sessionId: String,
     prompt: String?,
@@ -192,14 +203,24 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .resumeConversation
     )
   }
-  
+
   public func listSessions() async throws -> [SessionInfo] {
     let suffix = configuration.commandSuffix.map { " \($0)" } ?? ""
     let commandString = "\(configuration.command)\(suffix) logs --output-format json"
-    
+
+    // Capture command info for debugging
+    _lastExecutedCommandInfo = ExecutedCommandInfo(
+      commandString: commandString,
+      workingDirectory: configuration.workingDirectory,
+      stdinContent: nil,
+      executedAt: Date(),
+      method: .listSessions
+    )
+
     let process = configuredProcess(for: commandString)
     
     let outputPipe = Pipe()
@@ -306,9 +327,19 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
     outputFormat: ClaudeCodeOutputFormat,
     stdinContent: String? = nil,
     abortController: AbortController? = nil,
-    timeout: TimeInterval? = nil
+    timeout: TimeInterval? = nil,
+    method: ExecutedCommandInfo.ExecutionMethod
   ) async throws -> ClaudeCodeResult {
     logger?.info("Executing command: \(command)")
+
+    // Capture command info for debugging
+    _lastExecutedCommandInfo = ExecutedCommandInfo(
+      commandString: command,
+      workingDirectory: configuration.workingDirectory,
+      stdinContent: stdinContent,
+      executedAt: Date(),
+      method: method
+    )
     
     let process = configuredProcess(for: command)
     

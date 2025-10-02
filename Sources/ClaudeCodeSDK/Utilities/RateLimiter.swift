@@ -144,7 +144,11 @@ public class RateLimitedClaudeCode: ClaudeCode {
     get { wrapped.configuration }
     set { wrapped.configuration = newValue }
   }
-  
+
+  public var lastExecutedCommandInfo: ExecutedCommandInfo? {
+    wrapped.lastExecutedCommandInfo
+  }
+
   public init(
     wrapped: ClaudeCode,
     requestsPerMinute: Int,

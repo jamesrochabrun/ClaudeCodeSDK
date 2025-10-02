@@ -658,6 +658,79 @@ if let nvmPath = NvmPathDetector.detectNvmPath() {
 let config = ClaudeCodeConfiguration.withNvmSupport()
 ```
 
+## Debugging
+
+The SDK provides access to the last executed command for debugging and troubleshooting purposes.
+
+### Accessing Command Information
+
+After executing any command, you can access detailed information about it:
+
+```swift
+let client = ClaudeCodeClient()
+
+let result = try await client.runSinglePrompt(
+  prompt: "Write a function",
+  outputFormat: .streamJson,
+  options: options
+)
+
+// Access the last executed command information
+if let commandInfo = client.lastExecutedCommandInfo {
+  print("Command: \(commandInfo.commandString)")
+  print("Working Directory: \(commandInfo.workingDirectory ?? "None")")
+  print("Stdin Content: \(commandInfo.stdinContent ?? "None")")
+  print("Executed At: \(commandInfo.executedAt)")
+  print("Method: \(commandInfo.method.rawValue)")
+}
+```
+
+### Reproducing Commands in Terminal
+
+You can use this information to reproduce the exact command in Terminal for debugging:
+
+```swift
+if let commandInfo = client.lastExecutedCommandInfo {
+  var terminalCommand = ""
+
+  // Add working directory if present
+  if let workingDir = commandInfo.workingDirectory {
+    terminalCommand += "cd \"\(workingDir)\" && "
+  }
+
+  // Add stdin if present
+  if let stdin = commandInfo.stdinContent {
+    terminalCommand += "echo \"\(stdin)\" | "
+  }
+
+  // Add the command
+  terminalCommand += commandInfo.commandString
+
+  print("Run this in Terminal:")
+  print(terminalCommand)
+
+  // Copy to clipboard if needed
+  NSPasteboard.general.clearContents()
+  NSPasteboard.general.setString(terminalCommand, forType: .string)
+}
+```
+
+### ExecutedCommandInfo Properties
+
+- **commandString**: The full command with all flags (e.g., `"claude -p --verbose --output-format stream-json"`)
+- **workingDirectory**: The directory where the command was executed
+- **stdinContent**: The content sent to stdin (user message, prompt, etc.)
+- **executedAt**: Timestamp of when the command was executed
+- **method**: The SDK method that executed the command (runSinglePrompt, continueConversation, etc.)
+
+### Use Cases
+
+- **Bug Reports**: Include exact command details in bug reports
+- **Terminal Reproduction**: Copy-paste commands to Terminal for debugging
+- **Support Tickets**: Provide exact command information to support teams
+- **Command Verification**: Verify that commands are constructed correctly
+- **Debugging Failures**: Understand what command failed and why
+
 ## License
 
 ClaudeCodeSDK is available under the MIT license. See the `LICENSE` file for more info.
