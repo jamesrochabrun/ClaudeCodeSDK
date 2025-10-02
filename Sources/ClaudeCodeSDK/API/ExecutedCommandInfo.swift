@@ -25,6 +25,23 @@ public struct ExecutedCommandInfo: Sendable {
   /// The method that executed the command
   public let method: ExecutionMethod
 
+  /// The shell executable used to run the command
+  public let shellExecutable: String
+
+  /// The shell arguments used (e.g., ["-l", "-c", command])
+  public let shellArguments: [String]
+
+  /// The actual PATH environment variable used at runtime (system PATH merged with additional paths)
+  /// Critical for debugging "command not found" errors
+  public let pathEnvironment: String
+
+  /// The full environment dictionary used at runtime (system env merged with custom env vars)
+  /// Useful for debugging environment-dependent issues
+  public let environment: [String: String]
+
+  /// The output format requested for this execution
+  public let outputFormat: String
+
   /// The type of method that executed a Claude Code command
   public enum ExecutionMethod: String, Sendable {
     case runSinglePrompt

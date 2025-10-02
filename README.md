@@ -682,6 +682,13 @@ if let commandInfo = client.lastExecutedCommandInfo {
   print("Stdin Content: \(commandInfo.stdinContent ?? "None")")
   print("Executed At: \(commandInfo.executedAt)")
   print("Method: \(commandInfo.method.rawValue)")
+  print("Output Format: \(commandInfo.outputFormat)")
+
+  // Critical for debugging "command not found" errors
+  print("PATH: \(commandInfo.pathEnvironment)")
+
+  // See all environment variables
+  print("Environment Variables: \(commandInfo.environment.count) variables")
 }
 ```
 
@@ -722,6 +729,35 @@ if let commandInfo = client.lastExecutedCommandInfo {
 - **stdinContent**: The content sent to stdin (user message, prompt, etc.)
 - **executedAt**: Timestamp of when the command was executed
 - **method**: The SDK method that executed the command (runSinglePrompt, continueConversation, etc.)
+- **outputFormat**: The output format used (text, json, stream-json)
+- **shellExecutable**: The shell used to execute the command (e.g., `/bin/zsh`)
+- **shellArguments**: The arguments passed to the shell (e.g., `["-l", "-c", command]`)
+- **pathEnvironment**: **The actual PATH used at runtime** - critical for debugging "command not found" errors
+- **environment**: **The full environment dictionary used at runtime** - shows all system and custom environment variables
+
+### Advanced Debugging: PATH and Environment
+
+The most valuable debugging information is the **actual runtime PATH and environment**:
+
+```swift
+if let commandInfo = client.lastExecutedCommandInfo {
+  // Debug "command not found" errors by checking the actual PATH used
+  print("Actual PATH used:")
+  commandInfo.pathEnvironment.split(separator: ":").forEach { path in
+    print("  - \(path)")
+  }
+
+  // Check if specific environment variables were set
+  if let nodeEnv = commandInfo.environment["NODE_ENV"] {
+    print("NODE_ENV was set to: \(nodeEnv)")
+  }
+
+  // See what nvm version was actually used
+  if let nvmPath = commandInfo.pathEnvironment.split(separator: ":").first(where: { $0.contains(".nvm") }) {
+    print("Using nvm path: \(nvmPath)")
+  }
+}
+```
 
 ### Use Cases
 
@@ -730,6 +766,8 @@ if let commandInfo = client.lastExecutedCommandInfo {
 - **Support Tickets**: Provide exact command information to support teams
 - **Command Verification**: Verify that commands are constructed correctly
 - **Debugging Failures**: Understand what command failed and why
+- **PATH Debugging**: See the actual merged PATH to debug "command not found" errors
+- **Environment Debugging**: Verify environment variables were set correctly at runtime
 
 ## License
 
