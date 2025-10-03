@@ -77,4 +77,8 @@ public protocol ClaudeCode {
   /// - Parameter command: The command to check (e.g., "npm", "node")
   /// - Returns: true if the command is found in PATH, false otherwise
   func validateCommand(_ command: String) async throws -> Bool
+
+  /// Debug information about the last command executed
+  /// Returns nil if no command has been executed yet
+  var lastExecutedCommandInfo: ExecutedCommandInfo? { get }
 }

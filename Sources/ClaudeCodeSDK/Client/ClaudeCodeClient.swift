@@ -12,9 +12,17 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
   private var cancellables = Set<AnyCancellable>()
   private var logger: Logger?
   private let decoder = JSONDecoder()
-  
+
   /// Configuration for the client - can be updated at any time
   public var configuration: ClaudeCodeConfiguration
+
+  /// Storage for last executed command info
+  private var _lastExecutedCommandInfo: ExecutedCommandInfo?
+
+  /// Debug information about the last command executed
+  public var lastExecutedCommandInfo: ExecutedCommandInfo? {
+    _lastExecutedCommandInfo
+  }
   
   public init(configuration: ClaudeCodeConfiguration = .default) {
     self.configuration = configuration
@@ -35,18 +43,18 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
     self.init(configuration: config)
   }
   // MARK: - Protocol Implementation
-  
-  private func configuredProcess(for command: String) -> Process {
+
+  private func configuredProcess(for command: String) -> (process: Process, environment: [String: String]) {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/bin/zsh")
     process.arguments = ["-l", "-c", command]
-    
+
     if let workingDirectory = configuration.workingDirectory {
       process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
     }
-    
+
     var env = ProcessInfo.processInfo.environment
-    
+
     // Add additional paths to PATH
     if !configuration.additionalPaths.isEmpty {
       let additionalPathString = configuration.additionalPaths.joined(separator: ":")
@@ -56,16 +64,16 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
         env["PATH"] = "\(additionalPathString):/bin"
       }
     }
-    
+
     // Apply custom environment variables
     for (key, value) in configuration.environment {
       env[key] = value
     }
-    
+
     process.environment = env
-    
+
     logger?.info("Configured process with command: \(command)")
-    return process
+    return (process, env)
   }
   
   public func runWithStdin(
@@ -92,10 +100,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: stdinContent,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .runWithStdin
     )
   }
-  
+
   public func runSinglePrompt(
     prompt: String,
     outputFormat: ClaudeCodeOutputFormat,
@@ -124,10 +133,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .runSinglePrompt
     )
   }
-  
+
   public func continueConversation(
     prompt: String?,
     outputFormat: ClaudeCodeOutputFormat,
@@ -157,10 +167,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .continueConversation
     )
   }
-  
+
   public func resumeConversation(
     sessionId: String,
     prompt: String?,
@@ -192,15 +203,30 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
       outputFormat: outputFormat,
       stdinContent: prompt,
       abortController: opts.abortController,
-      timeout: opts.timeout
+      timeout: opts.timeout,
+      method: .resumeConversation
     )
   }
-  
+
   public func listSessions() async throws -> [SessionInfo] {
     let suffix = configuration.commandSuffix.map { " \($0)" } ?? ""
     let commandString = "\(configuration.command)\(suffix) logs --output-format json"
-    
-    let process = configuredProcess(for: commandString)
+
+    let (process, environment) = configuredProcess(for: commandString)
+
+    // Capture command info for debugging with actual runtime environment
+    _lastExecutedCommandInfo = ExecutedCommandInfo(
+      commandString: commandString,
+      workingDirectory: configuration.workingDirectory,
+      stdinContent: nil,
+      executedAt: Date(),
+      method: .listSessions,
+      shellExecutable: "/bin/zsh",
+      shellArguments: ["-l", "-c", commandString],
+      pathEnvironment: environment["PATH"] ?? "",
+      environment: environment,
+      outputFormat: "json"
+    )
     
     let outputPipe = Pipe()
     let errorPipe = Pipe()
@@ -252,11 +278,11 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
   public func validateCommand(_ command: String) async throws -> Bool {
     // Use 'which' command to check if the command exists in PATH
     let checkCommand = "which \(command)"
-    
+
     logger?.info("Validating command: \(command)")
-    
-    let process = configuredProcess(for: checkCommand)
-    
+
+    let (process, _) = configuredProcess(for: checkCommand)
+
     let outputPipe = Pipe()
     let errorPipe = Pipe()
     process.standardOutput = outputPipe
@@ -280,7 +306,7 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
         // Log current PATH for debugging
         if configuration.enableDebugLogging {
           let pathCheckCommand = "echo $PATH"
-          let pathProcess = configuredProcess(for: pathCheckCommand)
+          let (pathProcess, _) = configuredProcess(for: pathCheckCommand)
           let pathPipe = Pipe()
           pathProcess.standardOutput = pathPipe
           
@@ -306,11 +332,26 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
     outputFormat: ClaudeCodeOutputFormat,
     stdinContent: String? = nil,
     abortController: AbortController? = nil,
-    timeout: TimeInterval? = nil
+    timeout: TimeInterval? = nil,
+    method: ExecutedCommandInfo.ExecutionMethod
   ) async throws -> ClaudeCodeResult {
     logger?.info("Executing command: \(command)")
-    
-    let process = configuredProcess(for: command)
+
+    let (process, environment) = configuredProcess(for: command)
+
+    // Capture command info for debugging with actual runtime environment
+    _lastExecutedCommandInfo = ExecutedCommandInfo(
+      commandString: command,
+      workingDirectory: configuration.workingDirectory,
+      stdinContent: stdinContent,
+      executedAt: Date(),
+      method: method,
+      shellExecutable: "/bin/zsh",
+      shellArguments: ["-l", "-c", command],
+      pathEnvironment: environment["PATH"] ?? "",
+      environment: environment,
+      outputFormat: outputFormat.rawValue
+    )
     
     let outputPipe = Pipe()
     let errorPipe = Pipe()

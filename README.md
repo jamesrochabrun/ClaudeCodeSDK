@@ -658,6 +658,117 @@ if let nvmPath = NvmPathDetector.detectNvmPath() {
 let config = ClaudeCodeConfiguration.withNvmSupport()
 ```
 
+## Debugging
+
+The SDK provides access to the last executed command for debugging and troubleshooting purposes.
+
+### Accessing Command Information
+
+After executing any command, you can access detailed information about it:
+
+```swift
+let client = ClaudeCodeClient()
+
+let result = try await client.runSinglePrompt(
+  prompt: "Write a function",
+  outputFormat: .streamJson,
+  options: options
+)
+
+// Access the last executed command information
+if let commandInfo = client.lastExecutedCommandInfo {
+  print("Command: \(commandInfo.commandString)")
+  print("Working Directory: \(commandInfo.workingDirectory ?? "None")")
+  print("Stdin Content: \(commandInfo.stdinContent ?? "None")")
+  print("Executed At: \(commandInfo.executedAt)")
+  print("Method: \(commandInfo.method.rawValue)")
+  print("Output Format: \(commandInfo.outputFormat)")
+
+  // Critical for debugging "command not found" errors
+  print("PATH: \(commandInfo.pathEnvironment)")
+
+  // See all environment variables
+  print("Environment Variables: \(commandInfo.environment.count) variables")
+}
+```
+
+### Reproducing Commands in Terminal
+
+You can use this information to reproduce the exact command in Terminal for debugging:
+
+```swift
+if let commandInfo = client.lastExecutedCommandInfo {
+  var terminalCommand = ""
+
+  // Add working directory if present
+  if let workingDir = commandInfo.workingDirectory {
+    terminalCommand += "cd \"\(workingDir)\" && "
+  }
+
+  // Add stdin if present
+  if let stdin = commandInfo.stdinContent {
+    terminalCommand += "echo \"\(stdin)\" | "
+  }
+
+  // Add the command
+  terminalCommand += commandInfo.commandString
+
+  print("Run this in Terminal:")
+  print(terminalCommand)
+
+  // Copy to clipboard if needed
+  NSPasteboard.general.clearContents()
+  NSPasteboard.general.setString(terminalCommand, forType: .string)
+}
+```
+
+### ExecutedCommandInfo Properties
+
+- **commandString**: The full command with all flags (e.g., `"claude -p --verbose --output-format stream-json"`)
+- **workingDirectory**: The directory where the command was executed
+- **stdinContent**: The content sent to stdin (user message, prompt, etc.)
+- **executedAt**: Timestamp of when the command was executed
+- **method**: The SDK method that executed the command (runSinglePrompt, continueConversation, etc.)
+- **outputFormat**: The output format used (text, json, stream-json)
+- **shellExecutable**: The shell used to execute the command (e.g., `/bin/zsh`)
+- **shellArguments**: The arguments passed to the shell (e.g., `["-l", "-c", command]`)
+- **pathEnvironment**: **The actual PATH used at runtime** - critical for debugging "command not found" errors
+- **environment**: **The full environment dictionary used at runtime** - shows all system and custom environment variables
+
+### Advanced Debugging: PATH and Environment
+
+The most valuable debugging information is the **actual runtime PATH and environment**:
+
+```swift
+if let commandInfo = client.lastExecutedCommandInfo {
+  // Debug "command not found" errors by checking the actual PATH used
+  print("Actual PATH used:")
+  commandInfo.pathEnvironment.split(separator: ":").forEach { path in
+    print("  - \(path)")
+  }
+
+  // Check if specific environment variables were set
+  if let nodeEnv = commandInfo.environment["NODE_ENV"] {
+    print("NODE_ENV was set to: \(nodeEnv)")
+  }
+
+  // See what nvm version was actually used
+  if let nvmPath = commandInfo.pathEnvironment.split(separator: ":").first(where: { $0.contains(".nvm") }) {
+    print("Using nvm path: \(nvmPath)")
+  }
+}
+```
+
+### Use Cases
+
+- **Bug Reports**: Include exact command details in bug reports
+- **Terminal Reproduction**: Copy-paste commands to Terminal for debugging
+- **Support Tickets**: Provide exact command information to support teams
+- **Command Verification**: Verify that commands are constructed correctly
+- **Debugging Failures**: Understand what command failed and why
+- **PATH Debugging**: See the actual merged PATH to debug "command not found" errors
+- **Environment Debugging**: Verify environment variables were set correctly at runtime
+
 ## License
 
 ClaudeCodeSDK is available under the MIT license. See the `LICENSE` file for more info.
