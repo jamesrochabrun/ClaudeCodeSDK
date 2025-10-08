@@ -18,6 +18,7 @@ public enum ClaudeCodeError: Error {
   case networkError(Error)
   case permissionDenied(String)
   case processLaunchFailed(String)
+  case invalidConfiguration(String)
   
   public var localizedDescription: String {
     switch self {
@@ -44,6 +45,8 @@ public enum ClaudeCodeError: Error {
       return "Permission denied: \(message)"
     case .processLaunchFailed(let message):
       return "Process failed to launch: \(message)"
+    case .invalidConfiguration(let message):
+      return "Invalid configuration: \(message)"
     }
   }
 }
