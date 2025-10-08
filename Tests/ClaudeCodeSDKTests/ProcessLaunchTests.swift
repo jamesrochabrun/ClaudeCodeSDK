@@ -17,7 +17,7 @@ final class ProcessLaunchTests: XCTestCase {
     var config = ClaudeCodeConfiguration.default
     // Using a command that doesn't exist
     config.command = "/nonexistent/command"
-    let client = ClaudeCodeClient(configuration: config)
+    let client = try ClaudeCodeClient(configuration: config)
 
     do {
       _ = try await client.runSinglePrompt(
@@ -42,7 +42,7 @@ final class ProcessLaunchTests: XCTestCase {
     var config = ClaudeCodeConfiguration.default
     config.command = "echo"  // Use echo for testing
     config.commandSuffix = "&& exit 1"  // Force immediate failure
-    let client = ClaudeCodeClient(configuration: config)
+    let client = try ClaudeCodeClient(configuration: config)
 
     do {
       _ = try await client.runSinglePrompt(
@@ -64,7 +64,7 @@ final class ProcessLaunchTests: XCTestCase {
     // Create a client with a failing command
     var config = ClaudeCodeConfiguration.default
     config.command = "/bin/false"  // Command that always fails
-    let client = ClaudeCodeClient(configuration: config)
+    let client = try ClaudeCodeClient(configuration: config)
 
     do {
       _ = try await client.resumeConversation(
@@ -88,7 +88,7 @@ final class ProcessLaunchTests: XCTestCase {
     var config = ClaudeCodeConfiguration.default
     // Use false command which exits with code 1 but produces no stderr
     config.command = "/usr/bin/false"
-    let client = ClaudeCodeClient(configuration: config)
+    let client = try ClaudeCodeClient(configuration: config)
 
     do {
       _ = try await client.runSinglePrompt(
@@ -115,7 +115,7 @@ final class ProcessLaunchTests: XCTestCase {
     var config = ClaudeCodeConfiguration.default
     config.command = "echo"  // Use echo for testing
     config.commandSuffix = "\"test output\""
-    let client = ClaudeCodeClient(configuration: config)
+    let client = try ClaudeCodeClient(configuration: config)
 
     // This should work normally (echo will succeed)
     do {
