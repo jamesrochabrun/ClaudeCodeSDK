@@ -13,6 +13,9 @@ let package = Package(
         .library(
             name: "ClaudeCodeSDK",
             targets: ["ClaudeCodeSDK"]),
+        .executable(
+            name: "QuickTest",
+            targets: ["QuickTest"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -26,6 +29,10 @@ let package = Package(
             dependencies: [
                .product(name: "SwiftAnthropic", package: "SwiftAnthropic"),
             ]),
+        .executableTarget(
+            name: "QuickTest",
+            dependencies: ["ClaudeCodeSDK"]
+        ),
         .testTarget(
             name: "ClaudeCodeSDKTests",
             dependencies: ["ClaudeCodeSDK"]
