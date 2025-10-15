@@ -68,7 +68,17 @@ public struct ClaudeCodeOptions {
   public init() {
     // Default initialization
   }
-  
+
+  /// Properly escapes a string for safe shell usage
+  /// Uses single quotes which protect against most special characters
+  /// Single quotes inside the string are escaped as '\''
+  private func shellEscape(_ string: String) -> String {
+    // Replace single quotes with '\'' (end quote, escaped quote, start quote)
+    let escaped = string.replacingOccurrences(of: "'", with: "'\\''")
+    // Wrap in single quotes
+    return "'\(escaped)'"
+  }
+
   /// Convert options to command line arguments
   internal func toCommandArgs() -> [String] {
     var args: [String] = []
@@ -113,12 +123,12 @@ public struct ClaudeCodeOptions {
     
     if let systemPrompt = systemPrompt {
       args.append("--system-prompt")
-      args.append("\"\(systemPrompt)\"")
+      args.append(shellEscape(systemPrompt))
     }
-    
+
     if let appendSystemPrompt = appendSystemPrompt {
       args.append("--append-system-prompt")
-      args.append("\"\(appendSystemPrompt)\"")
+      args.append(shellEscape(appendSystemPrompt))
     }
     
     if let permissionMode = permissionMode {
