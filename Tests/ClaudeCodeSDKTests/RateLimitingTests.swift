@@ -121,27 +121,28 @@ final class RateLimitingTests: XCTestCase {
 // Mock implementation for testing
 private class MockClaudeCode: ClaudeCode {
   var configuration: ClaudeCodeConfiguration = .default
-  
+  var lastExecutedCommandInfo: ExecutedCommandInfo?
+
   func runWithStdin(stdinContent: String, outputFormat: ClaudeCodeOutputFormat, options: ClaudeCodeOptions?) async throws -> ClaudeCodeResult {
     return .text("Mock response")
   }
-  
+
   func runSinglePrompt(prompt: String, outputFormat: ClaudeCodeOutputFormat, options: ClaudeCodeOptions?) async throws -> ClaudeCodeResult {
     return .text("Mock response")
   }
-  
+
   func continueConversation(prompt: String?, outputFormat: ClaudeCodeOutputFormat, options: ClaudeCodeOptions?) async throws -> ClaudeCodeResult {
     return .text("Mock response")
   }
-  
+
   func resumeConversation(sessionId: String, prompt: String?, outputFormat: ClaudeCodeOutputFormat, options: ClaudeCodeOptions?) async throws -> ClaudeCodeResult {
     return .text("Mock response")
   }
-  
+
   func listSessions() async throws -> [SessionInfo] {
     return []
   }
-  
+
   func cancel() {
     // No-op
   }
