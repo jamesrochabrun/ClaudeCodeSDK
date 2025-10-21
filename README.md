@@ -134,6 +134,10 @@ config.backend = NodePathDetector.isAgentSDKInstalled() ? .agentSDK : .headless
 let client = ClaudeCodeClient(configuration: config)
 ```
 
+### Migration Guide
+
+**Already using headless backend?** See [AGENT_SDK_MIGRATION.md](AGENT_SDK_MIGRATION.md) for a simple step-by-step guide to switch to the faster Agent SDK backend.
+
 ### Installation for Agent SDK Backend
 
 ```bash
