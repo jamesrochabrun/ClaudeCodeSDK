@@ -28,6 +28,9 @@ let package = Package(
             name: "ClaudeCodeSDK",
             dependencies: [
                .product(name: "SwiftAnthropic", package: "SwiftAnthropic"),
+            ],
+            resources: [
+                .copy("Resources/sdk-wrapper.mjs")
             ]),
         .executableTarget(
             name: "QuickTest",

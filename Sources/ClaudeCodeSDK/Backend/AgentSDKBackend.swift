@@ -153,7 +153,12 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 	// MARK: - Private Helpers
 
 	private func getDefaultWrapperPath() -> String? {
-		// Check if wrapper is in Resources directory relative to current execution
+		// First, try to find the resource using Bundle.module (SPM resources)
+		if let bundlePath = Bundle.module.path(forResource: "sdk-wrapper", ofType: "mjs", inDirectory: "Resources") {
+			return bundlePath
+		}
+
+		// Fallback: Check if wrapper is in Resources directory relative to current execution
 		let currentFile = #file
 		let currentFileNS = currentFile as NSString
 		let dir1 = currentFileNS.deletingLastPathComponent as NSString
@@ -219,7 +224,7 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 				sdkOptions["allowedTools"] = allowedTools
 			}
 			if let permissionMode = options.permissionMode {
-				sdkOptions["permissionMode"] = permissionMode
+				sdkOptions["permissionMode"] = permissionMode.rawValue
 			}
 			if let mcpServers = options.mcpServers {
 				// Convert MCP servers to SDK format
