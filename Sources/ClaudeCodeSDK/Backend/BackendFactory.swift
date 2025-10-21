@@ -29,7 +29,7 @@ internal struct BackendFactory {
 				)
 			}
 
-			if !NodePathDetector.isAgentSDKInstalled() {
+			if !NodePathDetector.isAgentSDKInstalled(configuration: configuration) {
 				throw ClaudeCodeError.invalidConfiguration(
 					"Claude Agent SDK is not installed. Run: npm install -g @anthropic-ai/claude-agent-sdk"
 				)
@@ -55,7 +55,7 @@ internal struct BackendFactory {
 			}
 
 			// Check Agent SDK installation
-			return NodePathDetector.isAgentSDKInstalled()
+			return NodePathDetector.isAgentSDKInstalled(configuration: configuration)
 		}
 	}
 
@@ -72,7 +72,7 @@ internal struct BackendFactory {
 				return "Node.js not found. Please install Node.js or specify nodeExecutable in configuration."
 			}
 
-			if !NodePathDetector.isAgentSDKInstalled() {
+			if !NodePathDetector.isAgentSDKInstalled(configuration: configuration) {
 				return "Claude Agent SDK is not installed. Run: npm install -g @anthropic-ai/claude-agent-sdk"
 			}
 

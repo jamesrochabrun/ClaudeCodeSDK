@@ -119,8 +119,26 @@ public struct NodePathDetector {
   }
 
   /// Checks if the Claude Agent SDK is installed globally
+  /// - Parameter configuration: Optional configuration with nodeExecutable path
   /// - Returns: true if the package is available
-  public static func isAgentSDKInstalled() -> Bool {
+  public static func isAgentSDKInstalled(configuration: ClaudeCodeConfiguration? = nil) -> Bool {
+    // 1. If nodeExecutable is specified in configuration, derive SDK path from it
+    if let nodeExecutable = configuration?.nodeExecutable {
+      // Node path: /path/to/node/v22.16.0/bin/node
+      // SDK path:  /path/to/node/v22.16.0/lib/node_modules/@anthropic-ai/claude-agent-sdk
+      let nodeBinDir = (nodeExecutable as NSString).deletingLastPathComponent
+      let nodePrefix = (nodeBinDir as NSString).deletingLastPathComponent
+      let packagePath = "\(nodePrefix)/lib/node_modules/@anthropic-ai/claude-agent-sdk"
+
+      if FileManager.default.fileExists(atPath: packagePath) {
+        return true
+      }
+      // If specified nodeExecutable doesn't have the SDK, don't fall through
+      // This ensures we fail fast if user explicitly configured a node path
+      return false
+    }
+
+    // 2. Fall back to automatic detection
     guard let npmGlobalPath = detectNpmGlobalPath() else {
       return false
     }
