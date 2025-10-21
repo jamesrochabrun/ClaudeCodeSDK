@@ -141,7 +141,7 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 		}
 
 		// Check if Agent SDK is installed
-		if !NodePathDetector.isAgentSDKInstalled() {
+		if !NodePathDetector.isAgentSDKInstalled(configuration: configuration) {
 			logger?.error("Claude Agent SDK is not installed. Run: npm install -g @anthropic-ai/claude-agent-sdk")
 			return false
 		}
