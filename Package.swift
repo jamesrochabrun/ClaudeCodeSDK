@@ -30,7 +30,7 @@ let package = Package(
                .product(name: "SwiftAnthropic", package: "SwiftAnthropic"),
             ],
             resources: [
-                .copy("Resources/sdk-wrapper.mjs")
+                .process("Resources")
             ]),
         .executableTarget(
             name: "QuickTest",

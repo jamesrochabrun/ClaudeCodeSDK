@@ -153,12 +153,14 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 	// MARK: - Private Helpers
 
 	private func getDefaultWrapperPath() -> String? {
-		// First, try to find the resource using Bundle.module (SPM resources)
-		if let bundlePath = Bundle.module.path(forResource: "sdk-wrapper", ofType: "mjs", inDirectory: "Resources") {
-			return bundlePath
+		// PRIORITY 1: Use Bundle.module to locate the bundled resource
+		// This works both in development and when bundled in an app
+		if let resourcePath = Bundle.module.path(forResource: "sdk-wrapper", ofType: "mjs") {
+			logger?.debug("Found SDK wrapper via Bundle.module: \(resourcePath)")
+			return resourcePath
 		}
 
-		// Fallback: Check if wrapper is in Resources directory relative to current execution
+		// PRIORITY 2: Fallback to #file approach for development/testing
 		let currentFile = #file
 		let currentFileNS = currentFile as NSString
 		let dir1 = currentFileNS.deletingLastPathComponent as NSString
@@ -167,17 +169,20 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 		let wrapperPath = "\(resourcesPath)/Resources/sdk-wrapper.mjs"
 
 		if FileManager.default.fileExists(atPath: wrapperPath) {
+			logger?.debug("Found SDK wrapper via #file fallback: \(wrapperPath)")
 			return wrapperPath
 		}
 
-		// Try relative to working directory
+		// PRIORITY 3: Try relative to working directory
 		if let workingDir = configuration.workingDirectory {
 			let relativePath = "\(workingDir)/Resources/sdk-wrapper.mjs"
 			if FileManager.default.fileExists(atPath: relativePath) {
+				logger?.debug("Found SDK wrapper via working directory: \(relativePath)")
 				return relativePath
 			}
 		}
 
+		logger?.error("SDK wrapper not found in Bundle.module or fallback paths")
 		return nil
 	}
 
