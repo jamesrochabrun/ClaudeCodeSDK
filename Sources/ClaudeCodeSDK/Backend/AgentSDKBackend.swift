@@ -231,6 +231,18 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 			if let permissionMode = options.permissionMode {
 				sdkOptions["permissionMode"] = permissionMode.rawValue
 			}
+			if let permissionPromptToolName = options.permissionPromptToolName {
+				sdkOptions["permissionPromptToolName"] = permissionPromptToolName
+			}
+			if let disallowedTools = options.disallowedTools {
+				sdkOptions["disallowedTools"] = disallowedTools
+			}
+			if let maxThinkingTokens = options.maxThinkingTokens {
+				sdkOptions["maxThinkingTokens"] = maxThinkingTokens
+			}
+			if let mcpConfigPath = options.mcpConfigPath {
+				sdkOptions["mcpConfigPath"] = mcpConfigPath
+			}
 			if let mcpServers = options.mcpServers {
 				// Convert MCP servers to SDK format
 				var mcpConfig: [String: [String: Any]] = [:]
@@ -257,6 +269,12 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 					}
 				}
 				sdkOptions["mcpServers"] = mcpConfig
+			}
+			if let resume = options.resume {
+				sdkOptions["resume"] = resume
+			}
+			if let continueOpt = options.`continue`, continueOpt {
+				sdkOptions["continue"] = continueOpt
 			}
 
 			config["options"] = sdkOptions
