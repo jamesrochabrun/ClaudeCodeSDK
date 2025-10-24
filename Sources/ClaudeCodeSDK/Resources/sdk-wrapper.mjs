@@ -59,6 +59,18 @@ async function main() {
     // Map Swift options to SDK options
     const sdkOptions = mapOptions(options);
 
+    // DEBUG: Log configuration being passed to Agent SDK
+    console.error('[SDK-WRAPPER] ===== AGENT SDK CONFIGURATION DEBUG =====');
+    console.error('[SDK-WRAPPER] Prompt length:', prompt?.length || 0);
+    console.error('[SDK-WRAPPER] Permission mode:', sdkOptions.permissionMode || 'NOT SET');
+    console.error('[SDK-WRAPPER] Permission prompt tool:', sdkOptions.permissionPromptToolName || 'NOT SET');
+    console.error('[SDK-WRAPPER] Allowed tools:', JSON.stringify(sdkOptions.allowedTools || []));
+    console.error('[SDK-WRAPPER] MCP servers:', sdkOptions.mcpServers ? Object.keys(sdkOptions.mcpServers) : 'NOT SET');
+    console.error('[SDK-WRAPPER] MCP config path:', options.mcpConfigPath || 'NOT SET');
+    console.error('[SDK-WRAPPER] Model:', sdkOptions.model || 'default');
+    console.error('[SDK-WRAPPER] Max turns:', sdkOptions.maxTurns || 'default');
+    console.error('[SDK-WRAPPER] ==========================================');
+
     // Execute query using the SDK
     const result = query({
       prompt,
@@ -119,6 +131,13 @@ function mapOptions(options) {
   // MCP servers configuration
   if (options.mcpServers) {
     sdkOptions.mcpServers = options.mcpServers;
+    console.error('[SDK-WRAPPER] MCP servers configured:', Object.keys(options.mcpServers));
+  }
+
+  // MCP config path (alternative to mcpServers)
+  if (options.mcpConfigPath) {
+    sdkOptions.mcpConfigPath = options.mcpConfigPath;
+    console.error('[SDK-WRAPPER] MCP config path set:', options.mcpConfigPath);
   }
 
   // Abort controller handling
