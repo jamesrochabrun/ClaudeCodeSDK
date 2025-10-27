@@ -244,6 +244,13 @@ if (options.systemPrompt) {
    - Updating SDK updates the entire Claude Code CLI
    - No independent versioning
 
+4. **Authentication Mechanism**
+   - cli.js handles authentication independently from headless mode
+   - Does NOT require `~/.claude` directory or ANTHROPIC_API_KEY
+   - Authentication source unknown (possibly embedded, keychain, or session-based)
+   - Testing confirmed: Agent SDK works even without `~/.claude` directory
+   - Contrast: Headless mode requires `~/.claude` and fails with "Claude Code not installed" error
+
 ---
 
 ## Recommendations
