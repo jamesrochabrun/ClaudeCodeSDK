@@ -757,6 +757,9 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
             logger?.debug("SERVER TOOL USE: \(serverToolUse.name)")
           case .webSearchToolResult(let searchResult):
             logger?.debug("WEB SEARCH RESULT: \(searchResult.content.count) results")
+          case .codeExecutionToolResult:
+            // TODO: Log code execution 
+            break
           }
         }
         
