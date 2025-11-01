@@ -744,6 +744,8 @@ internal final class HeadlessBackend: ClaudeCodeBackend, @unchecked Sendable {
 						logger?.debug("SERVER TOOL USE: \(serverToolUse.name)")
 					case .webSearchToolResult(let searchResult):
 						logger?.debug("WEB SEARCH RESULT: \(searchResult.content.count) results")
+					case .codeExecutionToolResult:
+						logger?.debug("CODE EXECUTION TOOL RESULT")
 					}
 				}
 
