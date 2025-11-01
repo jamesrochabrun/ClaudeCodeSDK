@@ -77,10 +77,32 @@ async function main() {
       options: sdkOptions
     });
 
+    // Track if any tools were used during the conversation
+    let toolsWereUsed = false;
+
     // Stream results as JSONL (same format as headless mode)
     for await (const message of result) {
       // Output each message as a JSON line
       console.log(JSON.stringify(message));
+
+      // Check if this message contains tool usage
+      if (message.type === 'assistant' && message.message?.content) {
+        for (const content of message.message.content) {
+          if (content.type === 'tool_use' || content.type === 'tool_result') {
+            toolsWereUsed = true;
+          }
+        }
+      }
+    }
+
+    // Smart exit: If NO tools were used, exit immediately to avoid 5s delay
+    // If tools WERE used, let natural cleanup happen (safer for MCP/tool cleanup)
+    if (!toolsWereUsed) {
+      console.error('[SDK-WRAPPER] No tools used - exiting immediately to avoid delay');
+      process.exit(0);
+    } else {
+      console.error('[SDK-WRAPPER] Tools were used - allowing natural cleanup');
+      // Let event loop drain naturally (gives MCP servers time to cleanup)
     }
 
   } catch (error) {
