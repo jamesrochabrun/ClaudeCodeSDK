@@ -240,10 +240,38 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 			if let maxThinkingTokens = options.maxThinkingTokens {
 				sdkOptions["maxThinkingTokens"] = maxThinkingTokens
 			}
-			if let mcpConfigPath = options.mcpConfigPath {
-				sdkOptions["mcpConfigPath"] = mcpConfigPath
-			}
-			if let mcpServers = options.mcpServers {
+			// Handle MCP configuration - prioritize file-based config over programmatic
+			// NOTE: The Agent SDK does NOT support mcpConfigPath directly, so we must
+			// read the file and parse it ourselves, then pass the mcpServers object
+			if let mcpConfigPath = options.mcpConfigPath, !mcpConfigPath.isEmpty {
+				// Read MCP config from file
+				logger?.info("Loading MCP config from file: \(mcpConfigPath)")
+
+				if FileManager.default.fileExists(atPath: mcpConfigPath) {
+					do {
+						let configData = try Data(contentsOf: URL(fileURLWithPath: mcpConfigPath))
+
+						if let configJson = try JSONSerialization.jsonObject(with: configData) as? [String: Any] {
+							// Extract mcpServers from the config file
+							if let mcpServersJson = configJson["mcpServers"] as? [String: [String: Any]] {
+								logger?.info("Found \(mcpServersJson.count) MCP server(s) in config file")
+								sdkOptions["mcpServers"] = mcpServersJson
+							} else {
+								logger?.warning("MCP config file exists but has no 'mcpServers' field")
+							}
+						} else {
+							logger?.error("Failed to parse MCP config file as JSON object")
+						}
+					} catch {
+						logger?.error("Failed to read MCP config file at \(mcpConfigPath): \(error.localizedDescription)")
+					}
+				} else {
+					logger?.warning("MCP config file does not exist at path: \(mcpConfigPath)")
+				}
+			} else if let mcpServers = options.mcpServers {
+				// Fallback to programmatic MCP server configuration
+				logger?.info("Using programmatic MCP server configuration with \(mcpServers.count) server(s)")
+
 				// Convert MCP servers to SDK format
 				var mcpConfig: [String: [String: Any]] = [:]
 				for (key, value) in mcpServers {

@@ -66,7 +66,6 @@ async function main() {
     console.error('[SDK-WRAPPER] Permission prompt tool:', sdkOptions.permissionPromptToolName || 'NOT SET');
     console.error('[SDK-WRAPPER] Allowed tools:', JSON.stringify(sdkOptions.allowedTools || []));
     console.error('[SDK-WRAPPER] MCP servers:', sdkOptions.mcpServers ? Object.keys(sdkOptions.mcpServers) : 'NOT SET');
-    console.error('[SDK-WRAPPER] MCP config path:', options.mcpConfigPath || 'NOT SET');
     console.error('[SDK-WRAPPER] Model:', sdkOptions.model || 'default');
     console.error('[SDK-WRAPPER] Max turns:', sdkOptions.maxTurns || 'default');
     console.error('[SDK-WRAPPER] ==========================================');
@@ -151,15 +150,11 @@ function mapOptions(options) {
   }
 
   // MCP servers configuration
+  // NOTE: The Agent SDK only supports mcpServers, not mcpConfigPath
+  // Config files must be read and parsed in Swift before passing servers here
   if (options.mcpServers) {
     sdkOptions.mcpServers = options.mcpServers;
     console.error('[SDK-WRAPPER] MCP servers configured:', Object.keys(options.mcpServers));
-  }
-
-  // MCP config path (alternative to mcpServers)
-  if (options.mcpConfigPath) {
-    sdkOptions.mcpConfigPath = options.mcpConfigPath;
-    console.error('[SDK-WRAPPER] MCP config path set:', options.mcpConfigPath);
   }
 
   // Abort controller handling
