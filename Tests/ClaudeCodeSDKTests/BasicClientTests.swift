@@ -11,27 +11,27 @@ import Foundation
 
 final class BasicClientTests: XCTestCase {
   
-  func testClientInitializationWithDebug() {
+  func testClientInitializationWithDebug() throws {
     // Test basic client initialization as shown in README
-    let client = ClaudeCodeClient(debug: true)
-    
+    let client = try ClaudeCodeClient(debug: true)
+
     XCTAssertNotNil(client)
     XCTAssertTrue(client.configuration.enableDebugLogging)
     XCTAssertEqual(client.configuration.command, "claude")
   }
-  
-  func testClientInitializationWithConfiguration() {
+
+  func testClientInitializationWithConfiguration() throws {
     // Test custom configuration initialization
-    var configuration = ClaudeCodeConfiguration(
+    let configuration = ClaudeCodeConfiguration(
       command: "claude",
       workingDirectory: "/path/to/project",
       environment: ["API_KEY": "value"],
       enableDebugLogging: true,
       additionalPaths: ["/custom/bin"]
     )
-    
-    let client = ClaudeCodeClient(configuration: configuration)
-    
+
+    let client = try ClaudeCodeClient(configuration: configuration)
+
     XCTAssertNotNil(client)
     XCTAssertEqual(client.configuration.command, "claude")
     XCTAssertEqual(client.configuration.workingDirectory, "/path/to/project")
@@ -39,10 +39,10 @@ final class BasicClientTests: XCTestCase {
     XCTAssertTrue(client.configuration.enableDebugLogging)
     XCTAssertEqual(client.configuration.additionalPaths, ["/custom/bin"])
   }
-  
-  func testClientConfigurationModificationAtRuntime() {
+
+  func testClientConfigurationModificationAtRuntime() throws {
     // Test runtime configuration modification as shown in README
-    let client = ClaudeCodeClient()
+    let client = try ClaudeCodeClient()
     
     // Modify configuration at runtime
     client.configuration.enableDebugLogging = false
@@ -63,16 +63,16 @@ final class BasicClientTests: XCTestCase {
     XCTAssertEqual(config.additionalPaths, ["/usr/local/bin", "/opt/homebrew/bin", "/usr/bin"])
   }
   
-  func testBackwardCompatibilityInitializer() {
+  func testBackwardCompatibilityInitializer() throws {
     // Test convenience initializer for backward compatibility
-    let client1 = ClaudeCodeClient(workingDirectory: "/test/path", debug: true)
-    
+    let client1 = try ClaudeCodeClient(workingDirectory: "/test/path", debug: true)
+
     XCTAssertEqual(client1.configuration.workingDirectory, "/test/path")
     XCTAssertTrue(client1.configuration.enableDebugLogging)
-    
+
     // Test with empty working directory
-    let client2 = ClaudeCodeClient(workingDirectory: "", debug: false)
-    
+    let client2 = try ClaudeCodeClient(workingDirectory: "", debug: false)
+
     XCTAssertNil(client2.configuration.workingDirectory)
     XCTAssertFalse(client2.configuration.enableDebugLogging)
   }

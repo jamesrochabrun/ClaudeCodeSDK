@@ -2,15 +2,18 @@
 
 [Beta] A Swift SDK for seamlessly integrating Claude Code into your macOS applications. Interact with Anthropic's Claude Code programmatically for AI-powered coding assistance.
 
-## ✨ What's New
+## ✨ What's New (v2.0.0)
 
+* **🎯 Dual-Backend Architecture** - Choose between traditional headless mode or new Agent SDK backend
+* **🚀 Agent SDK Support** - Optional Node.js-based backend using @anthropic-ai/claude-agent-sdk
+* **🔧 Backend Auto-Detection** - Automatically selects the best available backend
+* **📦 Platform Clarification** - macOS 13+ only (iOS removed due to Process API requirements)
 * **Native Session Storage** - Direct access to Claude CLI's session storage (`~/.claude/projects/`)
 * **Enhanced Error Handling** - Detailed error types with retry hints and classification
 * **Built-in Retry Logic** - Automatic retry with exponential backoff for transient failures
 * **Rate Limiting** - Token bucket rate limiter to respect API limits
 * **Timeout Support** - Configurable timeouts for all operations
 * **Cancellation** - AbortController support for canceling long-running operations
-* **New Configuration Options** - Model selection, permission modes, executable configuration, and more
 
 ## Overview
 
@@ -18,11 +21,16 @@ ClaudeCodeSDK allows you to integrate Claude Code's capabilities directly into y
 
 ## Requirements
 
-* **Platforms:** macOS 13+
+* **Platforms:** macOS 13+ **ONLY**
 * **Swift Version:** Swift 6.0+
-* **Dependencies:** Claude Code CLI installed (`npm install -g @anthropic/claude-code`)
+* **Dependencies (choose one):**
+  * **Headless Backend (default):** Claude Code CLI (`npm install -g @anthropic/claude-code`)
+  * **Agent SDK Backend (optional):** Claude Agent SDK (`npm install -g @anthropic-ai/claude-agent-sdk`)
 
-> **Note:** iOS is not supported because the SDK relies on spawning the Claude CLI as a subprocess using the `Process` API, which is only available on macOS. iOS apps run in a sandboxed environment that prevents executing external processes.
+> **Important Platform Notes:**
+> - **macOS Only**: This SDK exclusively supports macOS because it relies on the `Process` API to spawn subprocesses
+> - **iOS Not Supported**: iOS apps run in a sandboxed environment that prevents executing external processes
+> - **Package.swift Updated**: iOS platform declaration has been removed in v2.0.0
 
 ## 🚀 Installation
 
@@ -68,6 +76,93 @@ Task {
     } catch {
         print("Error: \(error)")
     }
+}
+```
+
+## Backend Selection
+
+The SDK now supports two execution backends:
+
+### 1. Headless Backend (Default)
+
+The traditional approach using `claude -p` CLI:
+
+```swift
+// Explicitly use headless backend (though it's the default)
+var config = ClaudeCodeConfiguration.default
+config.backend = .headless
+let client = ClaudeCodeClient(configuration: config)
+```
+
+**Pros:**
+- ✅ Simple setup
+- ✅ Proven reliability
+- ✅ Works with existing Claude CLI installation
+
+**Cons:**
+- ⚠️ Process overhead per query
+- ⚠️ Limited advanced features
+
+### 2. Agent SDK Backend (Optional, New in v2.0)
+
+Uses @anthropic-ai/claude-agent-sdk via Node.js wrapper:
+
+```swift
+// Use the new Agent SDK backend
+var config = ClaudeCodeConfiguration.default
+config.backend = .agentSDK
+let client = ClaudeCodeClient(configuration: config)
+```
+
+**Pros:**
+- ✅ 2-10x faster for repeated queries
+- ✅ Access to advanced features (coming soon: custom tools, hooks)
+- ✅ Better performance for batch operations
+
+**Cons:**
+- ⚠️ Requires Node.js and Agent SDK installation
+- ⚠️ Additional complexity
+
+### Backend Auto-Detection (Recommended)
+
+Let the SDK choose the best available backend:
+
+```swift
+// Detects if Agent SDK is installed, falls back to headless
+var config = ClaudeCodeConfiguration.default
+config.backend = NodePathDetector.isAgentSDKInstalled() ? .agentSDK : .headless
+let client = ClaudeCodeClient(configuration: config)
+```
+
+### Migration Guide
+
+**Already using headless backend?** See [AGENT_SDK_MIGRATION.md](AGENT_SDK_MIGRATION.md) for a simple step-by-step guide to switch to the faster Agent SDK backend.
+
+### Installation for Agent SDK Backend
+
+```bash
+# Install the Claude Agent SDK globally
+npm install -g @anthropic-ai/claude-agent-sdk
+
+# Verify installation
+node -e "import('@anthropic-ai/claude-agent-sdk').then(() => console.log('✓ Installed'))"
+```
+
+### Checking SDK Availability
+
+```swift
+import ClaudeCodeSDK
+
+// Check if Node.js is available
+if let nodePath = NodePathDetector.detectNodePath() {
+    print("Node.js found at: \(nodePath)")
+}
+
+// Check if Agent SDK is installed
+if NodePathDetector.isAgentSDKInstalled() {
+    print("✓ Agent SDK is installed")
+} else {
+    print("ℹ Agent SDK not found, using headless backend")
 }
 ```
 

@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Basic Error Handling
 
 func basicErrorHandling() async throws {
-    let client = ClaudeCodeClient()
+    let client = try ClaudeCodeClient()
 
     do {
         let result = try await client.runSinglePrompt(
@@ -41,8 +41,8 @@ func basicErrorHandling() async throws {
 // MARK: - Timeout Example
 
 func timeoutExample() async throws {
-    let client = ClaudeCodeClient()
-    
+    let client = try ClaudeCodeClient()
+
     var options = ClaudeCodeOptions()
     options.timeout = 30 // 30 second timeout
     
@@ -61,8 +61,8 @@ func timeoutExample() async throws {
 // MARK: - Retry Logic Example
 
 func retryExample() async {
-    let client = ClaudeCodeClient()
-    
+    guard let client = try? ClaudeCodeClient() else { return }
+
     // Use default retry policy (3 attempts with exponential backoff)
     do {
         let result = try await client.runSinglePromptWithRetry(
@@ -91,7 +91,7 @@ func retryExample() async {
 // MARK: - Combined Example with Smart Error Handling
 
 func smartErrorHandling() async throws {
-    let client = ClaudeCodeClient()
+    let client = try ClaudeCodeClient()
     var options = ClaudeCodeOptions()
     options.timeout = 60
     
@@ -131,7 +131,7 @@ func smartErrorHandling() async throws {
 // MARK: - Abort Controller Example
 
 func abortExample() async {
-    let client = ClaudeCodeClient()
+    guard let client = try? ClaudeCodeClient() else { return }
 
     var options = ClaudeCodeOptions()
     let abortController = AbortController()
@@ -162,7 +162,7 @@ func abortExample() async {
 // MARK: - Process Launch Failure Example
 
 func processLaunchFailureExample() async {
-    let client = ClaudeCodeClient()
+    guard let client = try? ClaudeCodeClient() else { return }
 
     // Example 1: Handle malformed command arguments
     var badOptions = ClaudeCodeOptions()

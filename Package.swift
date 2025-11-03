@@ -6,7 +6,6 @@ import PackageDescription
 let package = Package(
     name: "ClaudeCodeSDK",
     platforms: [
-         .iOS(.v15),
          .macOS(.v13)
     ],
     products: [
@@ -14,6 +13,9 @@ let package = Package(
         .library(
             name: "ClaudeCodeSDK",
             targets: ["ClaudeCodeSDK"]),
+        .executable(
+            name: "QuickTest",
+            targets: ["QuickTest"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -26,7 +28,14 @@ let package = Package(
             name: "ClaudeCodeSDK",
             dependencies: [
                .product(name: "SwiftAnthropic", package: "SwiftAnthropic"),
+            ],
+            resources: [
+                .process("Resources")
             ]),
+        .executableTarget(
+            name: "QuickTest",
+            dependencies: ["ClaudeCodeSDK"]
+        ),
         .testTarget(
             name: "ClaudeCodeSDKTests",
             dependencies: ["ClaudeCodeSDK"]
