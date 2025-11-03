@@ -19,7 +19,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/jamesrochabrun/SwiftAnthropic", from: "2.1.3"),
+        .package(url: "https://github.com/jamesrochabrun/SwiftAnthropic", exact: "2.2.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
