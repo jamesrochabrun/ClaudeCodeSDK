@@ -2,8 +2,6 @@
 
 [Beta] A Swift SDK for seamlessly integrating Claude Code into your macOS applications. Interact with Anthropic's Claude Code programmatically for AI-powered coding assistance.
 
-## ✨ What's New (v2.0.0)
-
 * **🎯 Dual-Backend Architecture** - Choose between traditional headless mode or new Agent SDK backend
 * **🚀 Agent SDK Support** - Optional Node.js-based backend using @anthropic-ai/claude-agent-sdk
 * **🔧 Backend Auto-Detection** - Automatically selects the best available backend
@@ -121,7 +119,6 @@ let client = ClaudeCodeClient(configuration: config)
 
 **Cons:**
 - ⚠️ Requires Node.js and Agent SDK installation
-- ⚠️ Additional complexity
 
 ### Backend Auto-Detection (Recommended)
 
