@@ -614,4 +614,12 @@ internal final class AgentSDKBackend: ClaudeCodeBackend, @unchecked Sendable {
 			logger?.error("Error parsing SDK JSON: \(error.localizedDescription)")
 		}
 	}
+
+	// MARK: - Debug Information
+
+	/// Debug information about the last command executed
+	/// Note: AgentSDKBackend does not currently track command execution details
+	var lastExecutedCommandInfo: ExecutedCommandInfo? {
+		return nil
+	}
 }

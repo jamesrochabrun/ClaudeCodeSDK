@@ -81,4 +81,8 @@ internal protocol ClaudeCodeBackend: Sendable {
   /// Validates if the backend is properly configured and available
   /// - Returns: true if the backend is ready to use
   func validateSetup() async throws -> Bool
+
+  /// Debug information about the last command executed
+  /// - Returns: Information about the last executed command, or nil if no commands have been executed
+  var lastExecutedCommandInfo: ExecutedCommandInfo? { get }
 }

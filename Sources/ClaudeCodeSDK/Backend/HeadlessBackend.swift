@@ -828,4 +828,11 @@ internal final class HeadlessBackend: ClaudeCodeBackend, @unchecked Sendable {
 		}
 		logger?.error("Error details: \(error)")
 	}
+
+	// MARK: - Debug Information
+
+	/// Debug information about the last command executed
+	var lastExecutedCommandInfo: ExecutedCommandInfo? {
+		return _lastExecutedCommandInfo
+	}
 }
