@@ -15,11 +15,12 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
 	/// Configuration for the client - can be updated at any time
 	public var configuration: ClaudeCodeConfiguration {
 		didSet {
-			// Recreate backend if type changed
-			if oldValue.backend != self.configuration.backend {
+			// Recreate backend if type or working directory changed
+			if oldValue.backend != self.configuration.backend ||
+			   oldValue.workingDirectory != self.configuration.workingDirectory {
 				do {
 					backend = try BackendFactory.createBackend(for: self.configuration)
-					logger?.info("Backend switched to: \(self.configuration.backend.rawValue)")
+					logger?.info("Backend recreated - type: \(self.configuration.backend.rawValue), workingDir: \(self.configuration.workingDirectory ?? "none")")
 				} catch {
 					logger?.error("Failed to create backend: \(error.localizedDescription)")
 					// Keep the old backend if creation fails
@@ -31,8 +32,7 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
 
 	/// Debug information about the last command executed
 	public var lastExecutedCommandInfo: ExecutedCommandInfo? {
-		// Note: This is a placeholder - actual implementation would need backend support
-		nil
+		return backend.lastExecutedCommandInfo
 	}
 
 	/// Initializes the client with a configuration
