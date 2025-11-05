@@ -11,10 +11,16 @@ import os.log
 public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
 	private var backend: ClaudeCodeBackend
 	private var logger: Logger?
+	private var isUpdatingConfiguration = false
 
 	/// Configuration for the client - can be updated at any time
 	public var configuration: ClaudeCodeConfiguration {
 		didSet {
+			// Prevent re-entrance to avoid infinite recursion when restoring old config on error
+			guard !isUpdatingConfiguration else { return }
+			isUpdatingConfiguration = true
+			defer { isUpdatingConfiguration = false }
+
 			// Recreate backend if type or working directory changed
 			if oldValue.backend != self.configuration.backend ||
 			   oldValue.workingDirectory != self.configuration.workingDirectory {
@@ -23,7 +29,8 @@ public final class ClaudeCodeClient: ClaudeCode, @unchecked Sendable {
 					logger?.info("Backend recreated - type: \(self.configuration.backend.rawValue), workingDir: \(self.configuration.workingDirectory ?? "none")")
 				} catch {
 					logger?.error("Failed to create backend: \(error.localizedDescription)")
-					// Keep the old backend if creation fails
+					// Restore old configuration to maintain consistent state
+					// Safe now because guard prevents re-entrance
 					configuration = oldValue
 				}
 			}
