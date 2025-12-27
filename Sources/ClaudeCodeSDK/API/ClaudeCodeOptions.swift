@@ -64,7 +64,115 @@ public struct ClaudeCodeOptions {
   
   /// Enable verbose logging
   public var verbose: Bool = false
-  
+
+  // MARK: - Additional Directories
+
+  /// Additional working directories for Claude to access
+  /// CLI flag: --add-dir (repeatable)
+  public var additionalDirectories: [String]?
+
+  // MARK: - Agent Configuration
+
+  /// Specify an agent for the current session
+  /// CLI flag: --agent
+  public var agent: String?
+
+  /// Custom subagents configuration
+  /// CLI flag: --agents (JSON)
+  public var agents: [String: SubagentDefinition]?
+
+  // MARK: - Output Configuration
+
+  /// JSON schema for validated output matching the schema
+  /// CLI flag: --json-schema
+  public var jsonSchema: String?
+
+  /// Specify available tools ("", "default", or comma-separated list like "Bash,Edit,Read")
+  /// CLI flag: --tools
+  public var tools: String?
+
+  /// Input format for print mode
+  /// CLI flag: --input-format
+  public var inputFormat: InputFormat?
+
+  // MARK: - Model Configuration
+
+  /// Fallback model when primary is overloaded (print mode only)
+  /// CLI flag: --fallback-model
+  public var fallbackModel: String?
+
+  // MARK: - Session Management
+
+  /// Specific session ID to use (must be a valid UUID)
+  /// CLI flag: --session-id
+  public var sessionId: String?
+
+  /// Create a new session ID when resuming instead of reusing the original
+  /// CLI flag: --fork-session
+  public var forkSession: Bool?
+
+  // MARK: - Streaming Options
+
+  /// Include partial streaming events in output
+  /// Requires --print and --output-format=stream-json
+  /// CLI flag: --include-partial-messages
+  public var includePartialMessages: Bool?
+
+  // MARK: - Settings Configuration
+
+  /// Path to a settings JSON file or a JSON string
+  /// CLI flag: --settings
+  public var settings: String?
+
+  /// Setting sources to load
+  /// CLI flag: --setting-sources
+  public var settingSources: [SettingSource]?
+
+  /// Only use MCP servers from --mcp-config, ignoring all other MCP configurations
+  /// CLI flag: --strict-mcp-config
+  public var strictMcpConfig: Bool?
+
+  /// Load system prompt from a file (print mode only)
+  /// CLI flag: --system-prompt-file
+  public var systemPromptFile: String?
+
+  // MARK: - Beta & Debug
+
+  /// Beta headers to include in API requests (API key users only)
+  /// CLI flag: --betas (repeatable)
+  public var betas: [String]?
+
+  /// Enable debug mode with optional category filtering
+  /// Examples: "api,mcp" or "!statsig,!file"
+  /// CLI flag: --debug
+  public var debug: String?
+
+  // MARK: - Permission & Safety
+
+  /// Skip all permission prompts (use with caution!)
+  /// CLI flag: --dangerously-skip-permissions
+  public var dangerouslySkipPermissions: Bool?
+
+  // MARK: - Browser & IDE Integration
+
+  /// Enable or disable Chrome browser integration
+  /// CLI flag: --chrome / --no-chrome
+  public var chrome: Bool?
+
+  /// Connect to IDE on startup if exactly one valid IDE is available
+  /// CLI flag: --ide
+  public var ide: Bool?
+
+  // MARK: - Plugins & Logging
+
+  /// Plugin directories to load for this session only
+  /// CLI flag: --plugin-dir (repeatable)
+  public var pluginDirectories: [String]?
+
+  /// Enable verbose LSP logging for debugging language server issues
+  /// CLI flag: --enable-lsp-logging
+  public var enableLspLogging: Bool?
+
   public init() {
     // Default initialization
   }
@@ -150,7 +258,7 @@ public struct ClaudeCodeOptions {
       // Create temporary file with MCP configuration
       let tempDir = FileManager.default.temporaryDirectory
       let configFile = tempDir.appendingPathComponent("mcp-config-\(UUID().uuidString).json")
-      
+
       let config = ["mcpServers": mcpServers]
       if let jsonData = try? JSONEncoder().encode(config),
          (try? jsonData.write(to: configFile)) != nil {
@@ -158,7 +266,136 @@ public struct ClaudeCodeOptions {
         args.append(configFile.path)
       }
     }
-    
+
+    // MARK: - Additional Directories (repeatable)
+
+    if let additionalDirectories = additionalDirectories {
+      for dir in additionalDirectories {
+        args.append("--add-dir")
+        args.append(dir)
+      }
+    }
+
+    // MARK: - Agent Configuration
+
+    if let agent = agent {
+      args.append("--agent")
+      args.append(agent)
+    }
+
+    if let agents = agents, !agents.isEmpty {
+      args.append("--agents")
+      if let jsonData = try? JSONEncoder().encode(agents),
+         let jsonString = String(data: jsonData, encoding: .utf8) {
+        args.append(shellEscape(jsonString))
+      }
+    }
+
+    // MARK: - Output Configuration
+
+    if let jsonSchema = jsonSchema {
+      args.append("--json-schema")
+      args.append(shellEscape(jsonSchema))
+    }
+
+    if let tools = tools {
+      args.append("--tools")
+      args.append(tools)
+    }
+
+    if let inputFormat = inputFormat {
+      args.append("--input-format")
+      args.append(inputFormat.rawValue)
+    }
+
+    // MARK: - Model Configuration
+
+    if let fallbackModel = fallbackModel {
+      args.append("--fallback-model")
+      args.append(fallbackModel)
+    }
+
+    // MARK: - Session Management
+
+    if let sessionId = sessionId {
+      args.append("--session-id")
+      args.append(sessionId)
+    }
+
+    if forkSession == true {
+      args.append("--fork-session")
+    }
+
+    // MARK: - Streaming Options
+
+    if includePartialMessages == true {
+      args.append("--include-partial-messages")
+    }
+
+    // MARK: - Settings Configuration
+
+    if let settings = settings {
+      args.append("--settings")
+      args.append(shellEscape(settings))
+    }
+
+    if let settingSources = settingSources, !settingSources.isEmpty {
+      args.append("--setting-sources")
+      args.append(settingSources.map { $0.rawValue }.joined(separator: ","))
+    }
+
+    if strictMcpConfig == true {
+      args.append("--strict-mcp-config")
+    }
+
+    if let systemPromptFile = systemPromptFile {
+      args.append("--system-prompt-file")
+      args.append(systemPromptFile)
+    }
+
+    // MARK: - Beta & Debug
+
+    if let betas = betas {
+      for beta in betas {
+        args.append("--betas")
+        args.append(beta)
+      }
+    }
+
+    if let debug = debug {
+      args.append("--debug")
+      args.append(debug)
+    }
+
+    // MARK: - Permission & Safety
+
+    if dangerouslySkipPermissions == true {
+      args.append("--dangerously-skip-permissions")
+    }
+
+    // MARK: - Browser & IDE Integration
+
+    if let chrome = chrome {
+      args.append(chrome ? "--chrome" : "--no-chrome")
+    }
+
+    if ide == true {
+      args.append("--ide")
+    }
+
+    // MARK: - Plugins & Logging (repeatable)
+
+    if let pluginDirectories = pluginDirectories {
+      for dir in pluginDirectories {
+        args.append("--plugin-dir")
+        args.append(dir)
+      }
+    }
+
+    if enableLspLogging == true {
+      args.append("--enable-lsp-logging")
+    }
+
     return args
   }
 }

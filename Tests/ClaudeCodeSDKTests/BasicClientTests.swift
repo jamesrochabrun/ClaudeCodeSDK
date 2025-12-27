@@ -60,7 +60,14 @@ final class BasicClientTests: XCTestCase {
     XCTAssertNil(config.workingDirectory)
     XCTAssertTrue(config.environment.isEmpty)
     XCTAssertFalse(config.enableDebugLogging)
-    XCTAssertEqual(config.additionalPaths, ["/usr/local/bin", "/opt/homebrew/bin", "/usr/bin"])
+    XCTAssertEqual(config.additionalPaths, [
+      "/usr/local/bin",
+      "/opt/homebrew/bin",
+      "/usr/bin",
+      "/bin",
+      "/usr/sbin",
+      "/sbin"
+    ])
   }
   
   func testBackwardCompatibilityInitializer() throws {
